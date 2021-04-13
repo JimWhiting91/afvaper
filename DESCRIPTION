@@ -18,3 +18,5 @@ Imports:
     parallel
 Suggests: 
     testthat
+URL: https://github.com/JimWhiting91/afvaper
+BugReports: https://github.com/JimWhiting91/afvaper/issues
