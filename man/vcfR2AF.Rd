@@ -11,7 +11,7 @@ vcfR2AF(vcf, popmap, n_cores = 1, allele = "REF")
 
 \item{popmap}{a two column data.frame, column 1 lists individuals and column 2 population assignment}
 
-\item{n_cores}{number of cores to run with mclapply}
+\item{n_cores}{number of cores to run with mclapply. If n_cores=1, runs with lapply instead.}
 
 \item{allele}{character vector of either "REF" or "ALT" for which allele frequency to return}
 }

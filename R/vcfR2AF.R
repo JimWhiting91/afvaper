@@ -4,7 +4,7 @@
 #'
 #' @param vcf a vcf stored as a vcfR object
 #' @param popmap a two column data.frame, column 1 lists individuals and column 2 population assignment
-#' @param n_cores number of cores to run with mclapply
+#' @param n_cores number of cores to run with mclapply. If n_cores=1, runs with lapply instead.
 #' @param allele character vector of either "REF" or "ALT" for which allele frequency to return
 #'
 #' @import vcfR
@@ -16,6 +16,9 @@ vcfR2AF <- function(vcf,
                     popmap,
                     n_cores=1,
                     allele="REF"){
+
+  # Set up parallel if needs be
+  this.lapply <- if (n_cores>1) { function (...) parallel::mclapply(...,mc.cores=n_cores) } else { lapply }
 
   # First calculate all population allele frequencies
   # Extract gt manually from VCF
@@ -34,7 +37,7 @@ vcfR2AF <- function(vcf,
   # For all populations, calculate the allele frequency of the ALT allele (it doesn't matter which we use)
   pops <- unique(unlist(popmap[,2]))
 
-  pop_AF <- mclapply(pops,function(pop){
+  pop_AF <- this.lapply(pops,function(pop){
 
     # Get only these pops...
     gt_tmp <- gt[,which(colnames(gt) %in% popmap[popmap[,2]==pop,1])]

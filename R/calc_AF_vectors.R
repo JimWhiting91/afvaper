@@ -1,4 +1,4 @@
-#' Calculate Allele Frequencies from a VCF
+#' Calculate Allele Frequency Change Vectors from a VCF
 #'
 #' Takes as input a population map (popmap) and a VCF (vcfR object) and returns an m x n matrix, where m = the number of SNPs and n = the number of populations
 #'
@@ -9,21 +9,26 @@
 #' @param normalise Boolean to determine whether allele frequencies should be normalised. Normalisation is essential for vector analysis, but setting normalise=FALSE permits comparison with the raw allele frequencies
 #' @param end_cutoff Numeric value describing how many SNPs the last window can have. By default, this equals the window_size, such that the last window must have the same number of SNPs as all windows. This is highly recommended.
 #' @param null_perms Integer value describing how many null permutations to run. When set to NULL, function returns observed allele frequency vectors. When set to any integer value, the function returns randomised permutated vectors that are used for estimation of the null distribution.
-#' @param n_cores number of cores to run with mclapply
+#' @param n_cores number of cores to run with mclapply. If n_cores=1, runs with lapply instead.
 #'
 #' @import vcfR
 #' @import parallel
+#' @import data.table
+#' @importFrom stats na.omit
 #'
-#' @return A matrix of population-specific allele frequencies
+#' @return A list object where each element corresponds to an m (number of SNPs per window) x n (number of populations) matrix of allele frequency change vectors
 #' @export
-calc_AF_vectors <- function(vcf=NULL, # Object of type vcfR, one chrom
-                            window_size=200, # window size in SNPs
-                            popmap=NULL, # Popmap
-                            vectors=NULL, # List of all vectors from ancestor to descendent
-                            n_cores=1, # Cores to run
-                            normalise=TRUE, # Normalise AF vectors
-                            end_cutoff=window_size, # How large should the last window be allowed to be
-                            null_perms=NULL){ # How many permutations to run
+calc_AF_vectors <- function(vcf=NULL,
+                            window_size=200,
+                            popmap=NULL,
+                            vectors=NULL,
+                            n_cores=1,
+                            normalise=TRUE,
+                            end_cutoff=window_size,
+                            null_perms=NULL){
+
+  # Set up parallel if needs be
+  this.lapply <- if (n_cores>1) { function (...) parallel::mclapply(...,mc.cores=n_cores) } else { lapply }
 
   # Check the inputs
   if(is.null(popmap)){
@@ -124,7 +129,7 @@ calc_AF_vectors <- function(vcf=NULL, # Object of type vcfR, one chrom
 
 
     # Run in parallel over all windows
-    window_list <- mclapply(1:length(winds),function(x){
+    window_list <- this.lapply(1:length(winds),function(x){
 
       # Subset for the window
       sub_vectors <- full_vectors[,winds[x]:winds2[x]]
@@ -154,7 +159,7 @@ calc_AF_vectors <- function(vcf=NULL, # Object of type vcfR, one chrom
     null_winds <- sort(sample(x = null_sites,size = null_perms,replace = F))
     null_winds2 <- null_winds + window_size - 1
 
-    window_list <- mclapply(1:null_perms,function(x){
+    window_list <- this.lapply(1:null_perms,function(x){
 
       # Make a randomised popmap
       null_popmap <- popmap

@@ -15,7 +15,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Imports:
     vcfR,
-    parallel
+    parallel,
+    data.table,
+    ggplot2
 Suggests: 
     testthat
 URL: https://github.com/JimWhiting91/afvaper
