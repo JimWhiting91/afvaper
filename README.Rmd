@@ -1,0 +1,59 @@
+---
+title: "README"
+author: "James Whiting"
+date: "14/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# AFvapeR
+### Allele Frequency Vector Analysis of Parallel Evolution in R
+
+The aim of this software is to quantify and compare parallel genotype change based on allele frequency changes between population pairs. The software produces a series of allele frequency matrices with n (number of snps per window) columns and m (number of population pairs) rows. Within each matrix, we perform eigen analysis to quantify skew in the eigenvalue distribution. An eigenvalue distribution with elevated eigenvalues on the first eigenvectors is indicative of a common trajectory through multivariate space for more than one population pair (ie. parallel or antiparallel genotype change in multiple populations). Multiple eigenvectors with elevated eigenvalues is indicative of multiple parallel/antiparallel axes within a genomic region, highlighting nonparallelism.
+
+### Parallelism Definitions:
+Parallel - Change along the same axis in the same direction.
+Antiparallel - Change along the same axis in the opposite direction.
+Nonparallel - Change along an alternative axis.
+
+## Demo
+### Make the inputs
+The software runs in R and requires the following inputs:
+
+  * A vcfR object of a chromosome, eg:
+```{r}
+library(vcfR)
+vcf_path <- "~/Exeter/VCFs/five_aside_STAR_3033083_final.vcf.gz"
+chr <- "chr1"
+
+# Subset for the chr using bcftools and read the file into R
+# We can subset a VCF on the system somewhere using software like BCFtools
+vcf_tempfile <- tempfile(pattern = "chr_tmp", fileext = '.vcf')
+on.exit({ unlink(vcf_tempfile) })
+system(paste0("bcftools view -r ",chr," ",vcf_path," > ",vcf_tempfile), wait=TRUE)
+
+# Read in input       
+vcf_input_chr1 <- read.vcfR(vcf_tempfile,verbose = F)
+vcf_input_chr1
+```
+  * A popmap, with individuals in column 1 and populations in column 2, eg.
+```{r}
+# We can fetch individuals from the vcfR object
+popmap <- data.frame(inds = colnames(vcf_input_chr1@gt)[2:ncol(vcf_input_chr1@gt)])
+
+# Add in population identifiers
+popmap$pop <- gsub('[0-9]+', '', popmap$inds)
+popmap$pop <- gsub('_F', '', popmap$pop)
+popmap$pop <- gsub('_M', '', popmap$pop)
+
+# Show popmap
+head(popmap)
+```
+  * A list of vectors describing parallel replicates, eg.
+```{r}
+vector_list <- list(c("GH","GL"),
+                    )
+```
