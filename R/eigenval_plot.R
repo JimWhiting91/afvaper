@@ -20,13 +20,10 @@ eigenval_plot <- function(eigen_res=NULL,
   if(is.null(eigen_res)){
     stop("Error, no results supplied from eigen_analyse_vectors")
   }
-  if(names(eigen_res[[1]]) != c("eigenvals","eigenvecs","A_matrix")){
-    stop("Error, input must be results output by eigen_analyse_vectors()")
-  }
   if(plot.pvalues & is.null(null_vectors)){
     stop("Error, if plotting p.values you must provide a null vectors input")
   }
-  if(names(eigen_res[[1]]) != c("eigenvals","eigenvecs","A_matrix")){
+  if(paste(names(eigen_res[[1]]),collapse=",") != paste(c("eigenvals","eigenvecs","A_matrix"),collapse = ",")){
     stop("Error, input must be results output by eigen_analyse_vectors()")
   }
 
@@ -84,6 +81,8 @@ eigenval_plot <- function(eigen_res=NULL,
   # Visualise each eigenval along the chr
   plots <- lapply(colnames(eigenval_sums),function(val){
 
+    # Either plot single chromosome or multiple...
+    if(length(unique(plot_dd$chr)) == 1){
     p1 <- ggplot(plot_dd,aes(x=pos,y=plot_dd[,val]))+
       geom_step()+
       theme_bw()+
@@ -92,12 +91,33 @@ eigenval_plot <- function(eigen_res=NULL,
             axis.title = element_text(size=18),
             title = element_text(size=20))+
       scale_x_continuous(breaks=seq(0,max(plot_dd$pos),2000000),
-                         labels=seq(0,max(plot_dd$pos),2000000)/1000000)
+                         labels=seq(0,max(plot_dd$pos),2000000)/1000000)+
+      xlab("Chr Position (Mb)")
 
-    if(plot.pvalues){
-      p1 <- p1 + labs(y=expression(-log[10](p)),x="Chr Position (Mb)")
     } else {
-      p1 <- p1 + labs(y=gsub("vector","value",val),x="Chr Position (Mb)")
+      # Factorise according to input vector
+      plot_dd$chr_F <- factor(plot_dd$chr,levels=unique(plot_dd$chr))
+
+      p1 <- ggplot(plot_dd,aes(x=pos,y=plot_dd[,val]))+
+        geom_step()+
+        theme_minimal()+
+        ggtitle(val)+
+        theme(axis.text=element_text(size=16),
+              axis.title = element_text(size=18),
+              title = element_text(size=20),
+              axis.text.x = element_blank(),
+              axis.ticks.x = element_blank(),
+              panel.spacing.x=unit(0.1, "lines"),
+              strip.text = element_text(angle=90,hjust=1,size=14))+
+        facet_wrap(~chr_F,nrow = 1,strip.position = "bottom",scales="free_x")+
+        xlab("Chromosome")
+    }
+
+    # Change labels if needed
+    if(plot.pvalues){
+      p1 <- p1 + ylab(expression(-log[10](p)))
+    } else {
+      p1 <- p1 + ylab(gsub("vector","value",val))
     }
 
     if(!(is.null(cutoffs)) & !plot.pvalues){

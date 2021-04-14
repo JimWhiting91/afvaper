@@ -9,7 +9,7 @@
 sum_eigenvals <- function(eigen_res){
 
   # Check the input
-  if(names(eigen_res[[1]]) != c("eigenvals","eigenvecs","A_matrix")){
+  if(paste(names(eigen_res[[1]]),collapse=",") != paste(c("eigenvals","eigenvecs","A_matrix"),collapse = ",")){
     stop("Error, input must be results output by eigen_analyse_vectors()")
   }
 

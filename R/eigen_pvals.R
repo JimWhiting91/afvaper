@@ -18,9 +18,9 @@ eigen_pvals <- function(eigen_res,null_vectors){
   }
 
   # Organise obs to matrix
-  obs_mat <- matrix(nrow=length(eigen_res_list),ncol=length(eigen_res_list[[1]]$eigenvals))
+  obs_mat <- matrix(nrow=length(eigen_res),ncol=length(eigen_res[[1]]$eigenvals))
   for(i in 1:ncol(obs_mat)){
-    obs_mat[,i] <- sapply(eigen_res_list,function(x){x[[1]][[i]]})
+    obs_mat[,i] <- sapply(eigen_res,function(x){x[[1]][[i]]})
   }
 
   # Get p-vals
@@ -32,6 +32,6 @@ eigen_pvals <- function(eigen_res,null_vectors){
   }
 
   colnames(p_vals) <- paste0("Eigenvalue_",1:ncol(p_vals))
-  rownames(p_vals) <- names(eigen_res_list)
+  rownames(p_vals) <- names(eigen_res)
   return(p_vals)
 }

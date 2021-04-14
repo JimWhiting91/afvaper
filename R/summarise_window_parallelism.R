@@ -12,27 +12,46 @@ summarise_window_parallelism <- function(window_id,
                                          eigen_res,
                                          loading_cutoff = 0.3,
                                          eigenvector = 1){
-  # Fetch loadings for eigenvectors
-  loadings <- eigen_res[[window_id]]$eigenvecs[,eigenvector]
+  # Make the final_out table
+  final_out <- data.frame(window_id=NA,
+                          eigenvector=NA,
+                          parallel_lineages=NA,
+                          parallel_pops=NA,
+                          antiparallel_pops=NA)
 
-  # Output
-  out <- data.frame(window_id=window_id,
-                    parallel_lineages = length(loadings[abs(loadings) > loading_cutoff]))
+  # Loop over all eigenvectors up to focal
+  for(eigN in 1:eigenvector){
 
-  # Catch cases where all parallel but negative
-  if(length(loadings[loadings < 0]) == length(loadings)){
-    loadings <- -1 * loadings
+    # Fetch loadings for eigenvectors
+    loadings <- eigen_res[[window_id]]$eigenvecs[,eigN]
+
+    # Output
+    out <- data.frame(window_id=window_id,
+                      eigenvector=paste0("Eig",eigN),
+                      parallel_lineages = length(loadings[abs(loadings) > loading_cutoff]))
+
+    # Catch cases where all parallel but negative
+    if(length(loadings[loadings < 0]) == length(loadings)){
+      loadings <- -1 * loadings
+    }
+
+    # Now describe parallel/antiparallel
+    out$parallel_pops <- paste(names(loadings[loadings >= loading_cutoff]),collapse = ",")
+    out$antiparallel_pops <- paste(names(loadings[loadings <= (-1*loading_cutoff)]),collapse = ",")
+
+    # Catch empty parallel_pops columns
+    if(length(loadings[loadings >= loading_cutoff]) == 0){
+      out$parallel_pops <- out$antiparallel_pops
+      out$antiparallel_pops <- ""
+    }
+
+    # Rbind together
+    final_out <- rbind(final_out,out)
   }
 
-  # Now describe parallel/antiparallel
-  out$parallel_pops <- paste(names(loadings[loadings >= loading_cutoff]),collapse = ",")
-  out$antiparallel_pops <- paste(names(loadings[loadings <= (-1*loading_cutoff)]),collapse = ",")
+  # Tidy and return
+  final_out <- na.omit(final_out)
+  rownames(final_out) <- 1:nrow(final_out)
 
-  # Catch empty parallel_pops columns
-  if(length(loadings[loadings >= loading_cutoff]) == 0){
-    out$parallel_pops <- out$antiparallel_pops
-    out$antiparallel_pops <- ""
-  }
-
-  return(out)
+  return(na.omit(final_out))
 }

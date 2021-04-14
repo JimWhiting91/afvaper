@@ -49,7 +49,7 @@ vcfR2AF <- function(vcf,
     total_counts <- ncol(gt_tmp) - apply(gt_tmp, 1, function(x) sum(is.na(x)))
 
     return(allele_counts/total_counts)
-  },mc.cores = n_cores)
+  })
 
   # Make a new matrix
   AF_mat <- matrix(ncol=length(pops),nrow=nrow(gt))

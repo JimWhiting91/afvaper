@@ -42,7 +42,7 @@ calc_AF_vectors <- function(vcf=NULL,
   }
 
   # Check vector pops are in popmap
-  if(any(!(unlist(popmap) %in% unique(popmap[,2])))){
+  if(any(!(unlist(vectors) %in% unique(popmap[,2])))){
     stop("Error, there are populations in the vectors input that are not in the popmap...")
   }
 
@@ -144,7 +144,7 @@ calc_AF_vectors <- function(vcf=NULL,
       # Any remaining NA values, reduce to 0
       sub_vectors[is.na(sub_vectors)] <- 0
       return(sub_vectors)
-    },mc.cores=n_cores)
+    })
 
     # Fetch start and end pos as names
     names(window_list) <- sapply(1:length(winds),function(x){
@@ -189,7 +189,7 @@ calc_AF_vectors <- function(vcf=NULL,
       # Any remaining NA values, reduce to 0
       null_vectors[is.na(null_vectors)] <- 0
       return(null_vectors)
-    },mc.cores=n_cores)
+    })
 
     # Fetch start and end pos as names
     names(window_list) <- sapply(1:length(null_winds),function(x){
