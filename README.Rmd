@@ -257,3 +257,6 @@ eig2_parallel
 ```
 
 Here we have the same information, but with 2 rows per window for each eigenvector up to the focal eigenvector (in this case set as `eigenvector = 2`).
+
+## Workflow Summary
+![AFvapeR](README_files/workflow.png)
