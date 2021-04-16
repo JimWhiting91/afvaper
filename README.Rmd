@@ -2,7 +2,9 @@
 title: "README"
 author: "James Whiting"
 date: "14/04/2021"
-output: html_document
+output: 
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +16,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The aim of this software is to quantify and compare parallel genotype change based on allele frequency changes between population pairs. The software produces a series of allele frequency matrices with n (number of snps per window) columns and m (number of population pairs) rows. Within each matrix, we perform eigen analysis to quantify skew in the eigenvalue distribution. An eigenvalue distribution with elevated eigenvalues on the first eigenvectors is indicative of a common trajectory through multivariate space for more than one population pair (ie. parallel or antiparallel genotype change in multiple populations). Multiple eigenvectors with elevated eigenvalues is indicative of multiple parallel/antiparallel axes within a genomic region, highlighting nonparallelism.
 
+### Load from development dir
+```{r}
+devtools::load_all("~/Exeter/afvaper/")
+```
+
 ### Parallelism Definitions:
 Parallel - Change along the same axis in the same direction.
 Antiparallel - Change along the same axis in the opposite direction.
@@ -23,7 +30,7 @@ Nonparallel - Change along an alternative axis.
 ### Make the inputs
 The software runs in R and requires the following inputs:
 
-  * A vcfR object of a chromosome, eg:
+* A vcfR object of a chromosome, eg:
 ```{r}
 library(vcfR)
 vcf_path <- "~/Exeter/VCFs/five_aside_STAR_3033083_final.vcf.gz"
@@ -39,7 +46,7 @@ system(paste0("bcftools view -r ",chr," ",vcf_path," > ",vcf_tempfile), wait=TRU
 vcf_input_chr1 <- read.vcfR(vcf_tempfile,verbose = F)
 vcf_input_chr1
 ```
-  * A popmap, with individuals in column 1 and populations in column 2, eg.
+* A popmap, with individuals in column 1 and populations in column 2, eg.
 ```{r}
 # We can fetch individuals from the vcfR object
 popmap <- data.frame(inds = colnames(vcf_input_chr1@gt)[2:ncol(vcf_input_chr1@gt)])
@@ -52,8 +59,200 @@ popmap$pop <- gsub('_M', '', popmap$pop)
 # Show popmap
 head(popmap)
 ```
-  * A list of vectors describing parallel replicates, eg.
+* A list of vectors describing parallel replicates. These are based on population identifiers in the popmap, and in all cases the first and second population should be in the same direction, i.e. for Ecotype1 vs Ecotype2, all first populations should be Ecotype1 and all second populations should be Ecotype2. Provide names for each replicate for downstream summaries. To build the vector list:
 ```{r}
-vector_list <- list(c("GH","GL"),
-                    )
+# View populations in the popmap
+unique(popmap$pop)
+
+# Build vector list
+vector_list <- list(c("LT","UT"),
+                    c("GH","GL"),
+                    c("APHP","APLP"),
+                    c("LO","UQ"),
+                    c("LMD","UMD"))
+
+# Name vectors
+names(vector_list) <- c("Tacarigua","Guanapo","Aripo","Oropuche","Madamas")
+
+# Show vector list
+vector_list
 ```
+### Calculate Allele Frequency Change Vectors
+In order to analyse our VCF, we need to transform the inputs into a list allele frequency changes matrices, where each row is the normalised allele frequency change vector for one of our replicates, for N SNPs (where N is our window size). This is handled with the `calc_AF_vectors()` function:
+```{r}
+# Set our window size
+window_snps = 200
+
+# Calculate Allele Frequency Change Vector Matrices
+AF_input <- calc_AF_vectors(vcf = vcf_input_chr1,
+                            window_size = window_snps,
+                            popmap = popmap,
+                            vectors = vector_list,
+                            n_cores = 4)
+
+# Show features of input...
+print(paste0("Number of windows = ",length(AF_input)))
+print(paste0("Number of SNPs per window = ",ncol(AF_input[[1]])))
+print(paste0("Number of vectors per window = ",nrow(AF_input[[1]])))
+```
+
+We also want to build a set of null vectors, in which the population assignment is shuffled among individuals and new vectors are calculated using the same structure as the originals. We do this using the same function, but pass a `null_perms` value to describe how many random vectors to calculate:
+
+```{r}
+# How many permutations to run
+null_perm_N = 1000
+
+# Calculate Allele Frequency Change Vector Matrices
+null_input <- calc_AF_vectors(vcf = vcf_input_chr1,
+                            window_size = window_snps,
+                            popmap = popmap,
+                            vectors = vector_list,
+                            n_cores = 4,
+                            null_perms = null_perm_N)
+
+# Show features of input...
+print(paste0("Number of null windows = ",length(null_input)))
+print(paste0("Number of SNPs per window = ",ncol(null_input[[1]])))
+print(paste0("Number of vectors per window = ",nrow(null_input[[1]])))
+```
+
+Note here that 1000 null permutations is on the low size, and a value closer to 10,000+ would be better. In practise, given it is easiest to run these functions over separate chromosomes, we can aim for a total of 10,000 null vectors from across all chromosomes and combine null vectors calculated on individual chromosomes. The easiest way to do this is to divide the desired total of 10,000 (or more) up between chromosomes based on the relative sizes (this info is available in a genome fasta index for e.g.). If we store each per-chromosome set of `null_input` vectors to a list, we can easily merge these into a single list with: `merged_null_input <- unlist(all_chr_null_input_list,recursive=FALSE)`. This `merged_null_input` can then be used as detailed below.
+
+### Perform Eigen Analysis Over Allele Frequency Matrices
+Taking the `AF_input` data, we can perform eigen analyses over all matrices with a single command:
+```{r}
+# Perform eigen analysis
+eigen_res <- lapply(AF_input,eigen_analyse_vectors)
+```
+
+The `eigen_res` output is a list containing, for each matrix, the eigenvalue distribution, the eigenvector loadings, and the projected A matrix that shows per-SNP scores for each eigenvector. The chromosomal regions are stored in `names(eigen_res)`:
+```{r}
+# View chromosomal regions:
+head(names(eigen_res))
+```
+```{r}
+# View eigenvalue distribution of first matrix
+eigen_res[[1]]$eigenvals
+```
+```{r}
+# View eigenvector loadings of first matrix
+eigen_res[[1]]$eigenvecs
+```
+```{r}
+# View head of SNP scores
+head(eigen_res[[1]]$A_matrix)
+```
+
+### Merge results from different chromosomes
+Having calculated `eigen_res` across different chromosomes, we can then combine these by listing them out and reducing down the list:
+
+```
+eigen_res_list <- list(eigen_res_chr1,eigen_res_chr2,eigen_res_chr3)
+allchr_eigen_res <- merge_eigen_res(eigen_res_list)
+```
+
+If running over multiple chromosomes, it is recommended to do merge results across chromosomes before proceeding onto analysis...
+
+### Find Null Cutoffs
+Using our `null_input`, we can output a matrix containing the cutoff expectations from the null distribution for each eigenvector for various significance thresholds:
+```{r}
+# Get cutoffs for 95%, 99% and 99.9%
+null_cutoffs <- find_null_cutoff(null_input,cutoffs = c(0.95,0.99,0.999))
+null_cutoffs
+```
+
+Here, the values are summed through eigenvalues, such that the value for Eigenvector 2 is the sum of Eigenvalues 1 + 2, and the maximum value is equivalent to the number of replicates (`length(vector_list)`).
+
+### Calculate p-values
+We can also calculate one-tailed p-values by comparing our observed eigenvalues to the null distribution. These are conceptually similar to using cutoffs, i.e. anything above the 95% cutoff outlined above will have a p-value < 0.05, however they can be useful for removing noise and highlighting peaks. These are calculated using the `eigen_res` results and the `null_input` vectors, and as output we get p-values for each eigenvector and window.
+```{r}
+# Calculate p-vals
+pvals <- eigen_pvals(eigen_res,null_input)
+
+# Show lowest pvals
+head(pvals)
+```
+
+Note: Because these p-values are calculated by comparing to the null distribution, they are bounded by the number of permutations. For e.g. if you run 1000 permuations, the lowest possible p-value for an observed value that exceeds all 1000 of the null values is simply (0+1/1000+1) which is ~ 0.001. If we ran 10,000 permutations and again had an observed eigenvalue greater than all 10,000 null values, this would be ~ 0.0001 e.t.c. 
+
+Consider this when interpreting p-values.
+
+### Plot Eigenvalues Along Chromosomes
+We can plot the eigenvalues for each chromosome, either plotting the raw eigenvalues or the associated p-values. The output of `eigenval_plot()` gives a figure for each eigenvector:
+```{r}
+# Plot the raw eigenvalues, and visualise the cutoff of 99%
+all_plots <- eigenval_plot(eigen_res,cutoffs = null_cutoffs[,"99%"])
+
+# Show the plots for eigenvalue 1 and 2
+cowplot::plot_grid(all_plots[[1]],all_plots[[2]],ncol=1)
+```
+
+Alternatively, we can plot the p-values:
+```{r}
+# Plot the raw eigenvalues, and visualise the cutoff of 99%
+all_plots_p <- eigenval_plot(eigen_res,null_vectors = null_input,plot.pvalues = T)
+
+# Show the plots for eigenvalue 1 and 2
+cowplot::plot_grid(all_plots_p[[1]],all_plots_p[[2]],ncol=1)
+```
+
+Note here, each of the plots is a ggplot object that can be extracted and edited however you like, for e.g. we can remove the title and change the colour with ease using standard ggplot syntax:
+```{r}
+# Pull the figure 
+eig1_pval_fig <- all_plots_p[[1]]
+
+# Edit
+eig1_pval_fig + theme(title = element_blank()) + geom_step(colour="blue")
+```
+
+### Pull Significant Windows
+Using the `eigen_res` results and `null_cutoffs`, we can identify windows that exceed the null cutoffs and return a list of genome windows. Here, we will use a made-up set of null cutoffs just to demonstrate the format of the output here:
+```{r}
+# Make dummy cutoffs
+dummy_cutoffs <- c(2.5,3.5,4.8,4.9,5.0)
+
+# Find dummy significant windows
+dummy_significant_windows <- signif_eigen_windows(eigen_res,dummy_cutoffs)
+
+# Display 'outliers'
+dummy_significant_windows[1:4]
+```
+
+### Summarise Outliers
+To make sense of outliers, we want to summarise various information within candidate windows. This includes: which of our replicate vectors are associated with the relevant eigenvector (i.e. which vectors load above a certain threshold onto eigenvector 1); and whether vectors are associated in the same (parallel) or different (antiparallel) direction. 
+
+We also want to know for genome regions that exhibited elevated eigenvalues on eigenvectors 2+, what is happening on all preceeding eigenvectors. This is because we are always summing the eigenvalues, and as such a large eigenvalue 2 sum reflects that most allele frequency variance is captured by the first 2 eigenvectors.
+
+The `summarise_window_parallelism()` function takes this into account, and returns all of this information into an output table for interpretation. The user defines the loading cutoff (which is an absolute value):
+```{r}
+# Summarise parallel evolution in windows that are significant on eigenvector 1
+eig1_parallel <- summarise_window_parallelism(window_id = "chr1:12164434-12213430",
+                                              eigen_res = eigen_res,
+                                              loading_cutoff = 0.3,
+                                              eigenvector = 1)
+# Show results
+eig1_parallel
+```
+
+This output therefore tells us how many replicates are associated with the first eigenvector at this genomic region (using the `names(vector_list)` provided earlier), and lists which of these are parallel or anti-parallel.
+
+If we want to look at multiple windows, we can simply loop over them, for e.g. here for eigenvector 2 outliers:
+```{r}
+eig2_parallel=NULL
+for(window in dummy_significant_windows[[2]]){
+  
+  # Summarise
+  window_tmp <- summarise_window_parallelism(window_id = window,
+                                              eigen_res = eigen_res,
+                                              loading_cutoff = 0.3,
+                                              eigenvector = 2)
+  
+  # Bind
+  eig2_parallel <- rbind(eig2_parallel,window_tmp)
+}
+
+# Show results
+eig2_parallel
+```
+
+Here we have the same information, but with 2 rows per window for each eigenvector up to the focal eigenvector (in this case set as `eigenvector = 2`).

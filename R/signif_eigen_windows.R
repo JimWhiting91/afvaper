@@ -4,6 +4,8 @@
 #' @param eigen_res A list of results from eigen_analyse_vectors(). This can be easily created by combining eigen_analyse_vectors with lapply. Each element of the input list should correspond to the eigen decomposition results for a given genome window.
 #' @param cutoffs Numeric vector of alpha thresholds for null distribution cutoffs. These must be equal in length to the number of eigenvalues, such that the first element is the threshold for eigenvalue 1, the second for eigevalue 2 e.t.c.
 #'
+#' @importFrom stats p.adjust
+#'
 #' @return A list of character vectors, where each element of the list represents the significant windows associated with each eigenvalue.
 #' @export
 signif_eigen_windows <- function(eigen_res = NULL,
@@ -12,6 +14,17 @@ signif_eigen_windows <- function(eigen_res = NULL,
   if(is.numeric(cutoffs) == FALSE){
     stop("Error: cutoffs should be a numeric vector with a cutoff per eigenvector")
   }
+  # if(!(is.null(pval_alpha)) & is.null(null_vectors)){
+  #   stop("Error: If using p-values, please provide null_vectors for calculation")
+  # }
+
+  # # Calculate pvalues if we are using them
+  # if(!(is.null(pval_alpha))){
+  #   tmp_pvals <- eigen_pvals(eigen_res,null_vectors)
+  #   for(i in 1:ncol(tmp_pvals)){
+  #     tmp_pvals[,i] <- p.adjust(tmp_pvals[,i],method=p.adjust.method)
+  #   }
+  # }
 
   # Fetch sums
   eigen_sums <- sum_eigenvals(eigen_res)
@@ -20,8 +33,11 @@ signif_eigen_windows <- function(eigen_res = NULL,
   eigenvec_out <- lapply(1:ncol(eigen_sums),function(vec){
 
     # Fetch the significant
-    signif_windows <- rownames(eigen_sums[eigen_sums[,vec] > cutoffs[vec],,drop=FALSE])
-
+    # if(is.null(pval_alpha)){
+      signif_windows <- rownames(eigen_sums[eigen_sums[,vec] > cutoffs[vec],,drop=FALSE])
+    # } else {
+    #  signif_windows <- rownames(tmp_pvals[tmp_pvals[,vec] <= pval_alpha,])
+    # }
     # Return
     if(length(signif_windows) > 0){
       return(signif_windows)
@@ -36,6 +52,6 @@ signif_eigen_windows <- function(eigen_res = NULL,
   }
 
   # Set names
-  names(eigenvec_out) <- paste0("Eigenvector ",1:length(cutoffs))
+  names(eigenvec_out) <- paste0("Eigenvector ",1:length(eigenvec_out))
   return(eigenvec_out)
 }
