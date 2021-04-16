@@ -5,6 +5,7 @@ date: "14/04/2021"
 output: 
   md_document:
     variant: markdown_github
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
