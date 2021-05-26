@@ -15,6 +15,7 @@ summarise_window_parallelism <- function(window_id,
   # Make the final_out table
   final_out <- data.frame(window_id=NA,
                           eigenvector=NA,
+                          eigenvalue=NA,
                           parallel_lineages=NA,
                           parallel_pops=NA,
                           antiparallel_pops=NA)
@@ -28,6 +29,7 @@ summarise_window_parallelism <- function(window_id,
     # Output
     out <- data.frame(window_id=window_id,
                       eigenvector=paste0("Eig",eigN),
+                      eigenvalue=eigen_res[[window_id]]$eigenvals[eigN],
                       parallel_lineages = length(loadings[abs(loadings) > loading_cutoff]))
 
     # Catch cases where all parallel but negative

@@ -25,7 +25,7 @@ vcfR2AF <- function(vcf,
   gt <- extract.gt(vcf)
 
   # Convert to numbers using the appropriate separator
-  geno_format <- strsplit(gt[1,1],"")[[1]][2]
+  geno_format <- strsplit(na.omit(gt[1,])[1],"")[[1]][2]
   gt[gt == paste0("0",geno_format,"0")] <- 0
   gt[gt == paste0("0",geno_format,"1")] <- 0.5
   gt[gt == paste0("1",geno_format,"1")] <- 1
