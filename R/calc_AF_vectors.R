@@ -47,7 +47,7 @@ calc_AF_vectors <- function(vcf=NULL,
   }
 
   # Check popmap individuals against the VCF
-  if(any(!(colnames(vcf@gt)[2:ncol(vcf@gt)] %in% popmap[,1]))){
+  if(any(!(popmap[,1] %in% colnames(vcf@gt)[2:ncol(vcf@gt)]))){
     stop("Error, there are individuals in the popmap that are not in the VCF...")
   }
 

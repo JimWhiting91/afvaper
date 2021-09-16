@@ -10,14 +10,14 @@
 #' @export
 signif_eigen_windows <- function(eigen_res = NULL,
                                  cutoffs = NULL){
-
+  
   if(is.numeric(cutoffs) == FALSE){
     stop("Error: cutoffs should be a numeric vector with a cutoff per eigenvector")
   }
   # if(!(is.null(pval_alpha)) & is.null(null_vectors)){
   #   stop("Error: If using p-values, please provide null_vectors for calculation")
   # }
-
+  
   # # Calculate pvalues if we are using them
   # if(!(is.null(pval_alpha))){
   #   tmp_pvals <- eigen_pvals(eigen_res,null_vectors)
@@ -25,32 +25,39 @@ signif_eigen_windows <- function(eigen_res = NULL,
   #     tmp_pvals[,i] <- p.adjust(tmp_pvals[,i],method=p.adjust.method)
   #   }
   # }
-
+  
   # Fetch sums
   eigen_sums <- sum_eigenvals(eigen_res)
-
+  
   # Run for each eigenvector
   eigenvec_out <- lapply(1:ncol(eigen_sums),function(vec){
-
+    
     # Fetch the significant
     # if(is.null(pval_alpha)){
-      signif_windows <- rownames(eigen_sums[eigen_sums[,vec] > cutoffs[vec],,drop=FALSE])
+    signif_windows <- rownames(eigen_sums[eigen_sums[,vec] > cutoffs[vec],,drop=FALSE])
     # } else {
     #  signif_windows <- rownames(tmp_pvals[tmp_pvals[,vec] <= pval_alpha,])
     # }
     # Return
-    if(length(signif_windows) > 0){
-      return(signif_windows)
-    } else {
+    if(is.null(signif_windows)){
       return(NA)
+    } else {
+      return(signif_windows)
     }
   })
-
+  
   # Remove windows that are already significant based on previous eigenvalues...
   for(i in 2:length(eigenvec_out)){
-    eigenvec_out[[i]] <- eigenvec_out[[i]][!(eigenvec_out[[i]] %in% unlist(lapply(1:(i-1),function(x){eigenvec_out[[x]]})))]
+    if(!(is.na(eigenvec_out[[i]][1]))){
+      if(length(na.omit(unlist(eigenvec_out[(i-1):1]))) > 0){
+        eigenvec_out[[i]] <- eigenvec_out[[i]][!(eigenvec_out[[i]] %in% na.omit(unlist(eigenvec_out[(i-1):1])))]
+        if(length(eigenvec_out[[i]]) == 0){
+          eigenvec_out[[i]] <- NA
+        }
+      }
+    }
   }
-
+  
   # Set names
   names(eigenvec_out) <- paste0("Eigenvector ",1:length(eigenvec_out))
   return(eigenvec_out)

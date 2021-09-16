@@ -1,5 +1,5 @@
 Package: afvaper
-Title: AF-vapeR: Allele Frequency Vector Analysis of Parallel Evolution in R
+Title: AF-vapeR: Allele Frequency Vector Analysis of Parallel Evolutionary Responses
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "James",
@@ -17,8 +17,10 @@ Imports:
     vcfR,
     parallel,
     data.table,
-    ggplot2
+    ggplot2,
+    tidyr
 Suggests: 
-    testthat
+    testthat (>= 3.0.0)
 URL: https://github.com/JimWhiting91/afvaper
 BugReports: https://github.com/JimWhiting91/afvaper/issues
+Config/testthat/edition: 3

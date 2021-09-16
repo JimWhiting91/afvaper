@@ -8,7 +8,8 @@ eigenval_plot(
   eigen_res = NULL,
   cutoffs = NULL,
   null_vectors = NULL,
-  plot.pvalues = FALSE
+  plot.pvalues = FALSE,
+  keep_chr_scale = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ eigenval_plot(
 \item{null_vectors}{A list of NULL allele frequency change vector matrices as output by calc_AF_vectors() with null_perms set to a numeric value. This is only necessary if wanting to calculate and plot p.values.}
 
 \item{plot.pvalues}{Boolean flag as to whether or not to plot p.values instead of summed eigenvalues.}
+
+\item{keep_chr_scale}{Boolean flag as to whether or not to plot chromosome widths according to their actual size, or plot all chromosomes/scaffolds as equal width}
 }
 \value{
 A list of ggplot figures, where each element corresponds to figure for each eigenvector.

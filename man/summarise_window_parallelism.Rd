@@ -12,7 +12,7 @@ summarise_window_parallelism(
 )
 }
 \arguments{
-\item{window_id}{A character string corresponding to a focal chromosomal window. This window must be in the output of names(eigen_res). Significant windows can be found using the function signif_eigen_windows().}
+\item{window_id}{A character string corresponding to a single focal chromosomal window, or a vector of multiple windows. These windows must be in the output of names(eigen_res). Significant windows can be found using the function signif_eigen_windows().}
 
 \item{eigen_res}{A list of results from eigen_analyse_vectors(). This can be easily created by combining eigen_analyse_vectors with lapply. Each element of the input list should correspond to the eigen decomposition results for a given genome window.}
 

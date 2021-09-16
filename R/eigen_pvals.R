@@ -16,13 +16,23 @@ eigen_pvals <- function(eigen_res,null_vectors){
   for(i in 1:ncol(null_mat)){
     null_mat[,i] <- sapply(null_res,function(x){x[[1]][[i]]})
   }
+  
+  # Sum over
+  for(i in 2:ncol(null_mat)){
+    null_mat[,i] <- rowSums(null_mat[,(i-1):i])
+  }
 
   # Organise obs to matrix
   obs_mat <- matrix(nrow=length(eigen_res),ncol=length(eigen_res[[1]]$eigenvals))
   for(i in 1:ncol(obs_mat)){
     obs_mat[,i] <- sapply(eigen_res,function(x){x[[1]][[i]]})
   }
-
+  
+  # Sum over
+  for(i in 2:ncol(obs_mat)){
+    obs_mat[,i] <- rowSums(obs_mat[,(i-1):i])
+  }
+  
   # Get p-vals
   p_vals <- matrix(ncol=ncol(obs_mat),nrow=nrow(obs_mat))
   for(i in 1:ncol(p_vals)){
