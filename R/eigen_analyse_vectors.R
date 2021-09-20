@@ -7,9 +7,12 @@
 #' @return A list object with three elements detailing the results: "eigenvals" contains the eigenvalue distribution, "eigenvecs" contains the eigenvectors, "A_matrix" contains the projected SNP scores for each eigenvector
 #' @export
 eigen_analyse_vectors <- function(vector_input){
-  C <- vector_input%*%t(vector_input)   ### Calculate matrix C ####
-  eig <- eigen(C)  ### eigen decomposition of C ###
-  vecs <- eig$vectors  ### eigenvectors (Q) of C ###
+  # Calculate matrix C
+  C <- vector_input%*%t(vector_input)  
+  # eigen decomposition of C
+  eig <- eigen(C)
+  # eigenvectors (Q) of C 
+  vecs <- eig$vectors
   vals <- eig$values
   a1 <- t(vecs)
   A <- t(vector_input) %*% solve(a1)

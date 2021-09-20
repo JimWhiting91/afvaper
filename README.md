@@ -1,4 +1,4 @@
-### Allele Frequency Vector Analysis of Parallel Evolutionary Responses
+# Allele Frequency Vector Analysis of Parallel Evolutionary Responses
 
 The aim of this software is to quantify and compare parallel genotype
 change based on allele frequency changes between population pairs. The
@@ -14,7 +14,7 @@ eigenvalues is indicative of multiple parallel/antiparallel axes within
 a genomic region, highlighting nonparallelism.
 
 For more information on the software, please see the accompanying
-preprint: XXX
+preprint: https://www.biorxiv.org/content/10.1101/2021.09.17.460770v1
 
 <!-- ### Load from development dir -->
 <!-- ```{r} -->
