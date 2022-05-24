@@ -61,26 +61,10 @@ eigenval_plot <- function(eigen_res=NULL,
     
     message("Calculating empirical p-values for plotting...")
     
-    # Get eigen res for null vectors
-    null_res <- lapply(null_vectors,eigen_analyse_vectors)
-    
-    # Organise nulls to matrix
-    null_mat <- matrix(nrow=length(null_res),ncol=length(null_res[[1]]$eigenvals))
-    for(i in 1:ncol(null_mat)){
-      null_mat[,i] <- sapply(null_res,function(x){x[[1]][[i]]})
-    }
-    colnames(null_mat) <- paste0("Eigenvector ",1:ncol(null_mat))
-    
-    # Sum over
-    for(i in 2:ncol(null_mat)){
-      null_mat[,i] <- rowSums(null_mat[,(i-1):i])
-    }
-    
-    for(eig in paste0("Eigenvector ",1:ncol(null_mat))){
-      obs_eig <- plot_dd[,eig]
-      null_vec <- null_mat[,eig]
-      pvals <- sapply(obs_eig,function(x){return(length(null_vec[null_vec > x])+1)}) / (length(null_vec)+1)
-      plot_dd[,eig] <- -log10(pvals)
+    # Use eigen_pvals plot
+    all_empPvals <- eigen_pvals(eigen_res,null_vectors)
+    for(i in 1:eigen_count){
+      plot_dd[,paste0("Eigenvector ",i)] <- -log10(all_empPvals[,i])
     }
     
   }

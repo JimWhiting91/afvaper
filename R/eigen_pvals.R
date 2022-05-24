@@ -4,6 +4,8 @@
 #' @param eigen_res A list of results from eigen_analyse_vectors(). This can be easily created by combining eigen_analyse_vectors with lapply. Each element of the input list should correspond to the eigen decomposition results for a given genome window.
 #' @param null_vectors A list of NULL allele frequency change vector matrices as output by calc_AF_vectors() with null_perms set to a numeric value. This is only necessary if wanting to calculate and plot p.values.
 #'
+#' @import qvalue
+#' 
 #' @return Matrix of p-values for each window (rows) for each eigenvector (columns)
 #' @export
 eigen_pvals <- function(eigen_res,null_vectors){
@@ -36,9 +38,7 @@ eigen_pvals <- function(eigen_res,null_vectors){
   # Get p-vals
   p_vals <- matrix(ncol=ncol(obs_mat),nrow=nrow(obs_mat))
   for(i in 1:ncol(p_vals)){
-    null_vec <- null_mat[,i]
-    obs_vec <- obs_mat[,i]
-    p_vals[,i] <- sapply(obs_vec,function(x){return(length(null_vec[null_vec > x])+1)}) / (length(null_vec)+1)
+    p_vals[,i] <- qvalue:::empPvals(stat = obs_mat[,i],stat0 = null_mat[,i])
   }
 
   colnames(p_vals) <- paste0("Eigenvalue_",1:ncol(p_vals))

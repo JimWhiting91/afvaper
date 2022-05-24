@@ -1,3 +1,8 @@
+AF-vapeR Manual v0.2
+================
+James R Whiting
+2022-05-24
+
 # Allele Frequency Vector Analysis of Parallel Evolutionary Responses
 
 The aim of this software is to quantify and compare parallel genotype
@@ -14,12 +19,13 @@ eigenvalues is indicative of multiple parallel/antiparallel axes within
 a genomic region, highlighting nonparallelism.
 
 For more information on the software, please see the accompanying
-preprint: https://www.biorxiv.org/content/10.1101/2021.09.17.460770v1
+preprint: <https://www.biorxiv.org/content/10.1101/2021.09.17.460770v1>
 
 <!-- ### Load from development dir -->
 <!-- ```{r} -->
 <!-- devtools::load_all("~/Exeter/afvaper/") -->
 <!-- ``` -->
+
 ### Installation
 
 ``` r
@@ -37,13 +43,11 @@ library(afvaper,verbose = F)
     e.g. 2 of 4 pops are parallel on eigenvector 1, and the other 2 pops
     are parallel on eigenvector 2.
 
-Workflow Summary
-----------------
+## Workflow Summary
 
 ![AFvapeR](README_files/workflow.png)
 
-Demo
-====
+# Demo
 
 ### Make the inputs
 
@@ -81,8 +85,34 @@ vcf_in
 # vcf_in <- read.vcfR("/path/to/chromosome-vcf/")
 ```
 
+-   As of v0.2 we can alternatively provide as input a matrix of
+    population-level allele frequencies. This matrix should be in the
+    form of a row for each SNP, where columns 1 and 2 have the
+    chromosome and bp position of each SNP. Each column from 3 onwards
+    should include the population allele frequency for a population
+    included in the vectors. The pop names used in column headers must
+    match the pop IDs in the vectors, e.g.
+
+``` r
+# An example matrix with the necessary formatting
+example_freq_matrix <- data.frame(chr = c("chr1","chr1","chr1"),
+                                         pos = c(1,10,50),
+                                         pop1 = c(0.2,0.5,0.7),
+                                         pop2 = c(0.1,0.1,0.3),
+                                         pop3 = c(0.6,0.1,0.2),
+                                         pop4 = c(0.2,0.4,0),
+                                         pop5 = c(0.4,0.8,1.0))
+example_freq_matrix
+```
+
+    ##    chr pos pop1 pop2 pop3 pop4 pop5
+    ## 1 chr1   1  0.2  0.1  0.6  0.2  0.4
+    ## 2 chr1  10  0.5  0.1  0.1  0.4  0.8
+    ## 3 chr1  50  0.7  0.3  0.2  0.0  1.0
+
 -   A popmap, with individuals in column 1 and
-    population/habitat/ecotype in column 2, eg.
+    population/habitat/ecotype in column 2, eg. (Note, if using an AF
+    frequency table, a popmap is not required)
 
 ``` r
 popmap <- read.table(system.file("full_parallel.popmap",package="afvaper"))
@@ -160,7 +190,8 @@ AF_input <- calc_AF_vectors(vcf = vcf_in,
                             window_size = window_snps,
                             popmap = popmap,
                             vectors = vector_list,
-                            n_cores = 4)
+                            n_cores = 4,
+                            data_type = "vcf")
 ```
 
     ## Calculating AF vectors for 845 windows with 200 SNPs each
@@ -188,11 +219,14 @@ print(paste0("Number of vectors per window = ",nrow(AF_input[[1]])))
 
     ## [1] "Number of vectors per window = 4"
 
-We also want to build a set of null vectors, in which the population
-assignment is shuffled among individuals and new vectors are calculated
-using the same structure as the originals. We do this using the same
-function, but pass a `null_perms` value to describe how many random
-vectors to calculate:
+Note, if we are using a matrix of allele frequencies, we set
+`data_type="freq"`
+
+We also want to build a set of null vectors, in which the observed
+allele frequencies are shuffled among populations and new vectors are
+calculated using the same vector structure as the originals. We do this
+using the same function, but pass a `null_perms` value to describe how
+many random vectors to calculate:
 
 ``` r
 # How many permutations to run
@@ -204,7 +238,8 @@ null_input <- calc_AF_vectors(vcf = vcf_in,
                               popmap = popmap,
                               vectors = vector_list,
                               n_cores = 4,
-                              null_perms = null_perm_N)
+                              null_perms = null_perm_N,
+                              data_type = "vcf")
 ```
 
     ## Calculating NULL AF vectors for 1000 windows with 200 SNPs each
@@ -233,7 +268,7 @@ print(paste0("Number of vectors per window = ",nrow(null_input[[1]])))
     ## [1] "Number of vectors per window = 4"
 
 Note here that 1000 null permutations is on the low side, and a value
-closer to 10,000+ would be better. In practise, given it is easiest to
+closer to 10,000+ would be better. In practice, given it is easiest to
 run these functions over separate chromosomes, we can aim for a total of
 10,000 null vectors from across all chromosomes and combine null vectors
 calculated on individual chromosomes. The easiest way to do this is to
@@ -255,7 +290,7 @@ chr_perms <- data.frame(chr=genome_fai$chr,
                         perms=round(chr_props * total_perms))
 
 # This gives us approximately 10000 null perms in total, distributed across the genome according to relative size of chromosomes...
-print(chr_perms)
+chr_perms
 ```
 
     ##    chr perms
@@ -263,19 +298,12 @@ print(chr_perms)
     ## 2 chr2  4444
     ## 3 chr3  3333
 
-``` r
-print(paste0("Total number of null permutations = ",sum(chr_perms$perms)))
-```
-
-    ## [1] "Total number of null permutations = 9999"
-
 If we store each per-chromosome set of `null_input` vectors to a list,
 we can easily merge these into a single list with:
 `merged_null_input <- unlist(all_chr_null_input_list,recursive=FALSE)`.
 This `merged_null_input` can then be used as detailed below.
 
-Example of splitting analysis over chromosomes
-----------------------------------------------
+## Example of splitting analysis over chromosomes
 
 Let’s say we have three chromosomes, and each chromosome is currently
 stored as a VCF. We can loop over each VCF and perform the analysis,
@@ -284,7 +312,7 @@ simulated chromosome VCF for demonstration purposes:
 
 ``` r
 # Make our VCF copies, give them new chromosome identifiers, and save as a list to loop over.
-# Note: In practise, if VCFs are stored somewhere on the system, we can just read them in within the loop rather that read them all in beforehand.
+# Note: In practice, if VCFs are stored somewhere on the system, we can just read them in within the loop rather that read them all in beforehand.
 vcf_in3 <- vcf_in2 <- vcf_in
 vcf_in2@fix[,1] <- "chr2"
 vcf_in3@fix[,1] <- "chr3"
@@ -387,8 +415,7 @@ c(head(names(AF_input)),tail(names(AF_input)))
     ##  [7] "chr3:19808619-19838830" "chr3:19838918-19877336" "chr3:19877527-19907262"
     ## [10] "chr3:19907433-19932368" "chr3:19932509-19954790" "chr3:19954865-19983084"
 
-Perform Eigen Analysis Over Allele Frequency Matrices
------------------------------------------------------
+## Perform Eigen Analysis Over Allele Frequency Matrices
 
 Taking the `AF_input` data, we can perform eigen analyses over all
 matrices with a single command. This can be run over the AFV from all
@@ -457,9 +484,9 @@ null_cutoffs
 ```
 
     ##                    95%      99%    99.9%
-    ## Eigenvector 1 3.459415 3.688065 3.832721
-    ## Eigenvector 2 3.825257 3.896904 3.948133
-    ## Eigenvector 3 3.953855 3.974302 3.985828
+    ## Eigenvector 1 3.491359 3.770233 3.950632
+    ## Eigenvector 2 3.838970 3.924911 3.984057
+    ## Eigenvector 3 3.960258 3.982424 3.996348
     ## Eigenvector 4 4.000000 4.000000 4.000000
 
 Here, the values are summed through eigenvalues, such that the value for
@@ -468,39 +495,40 @@ equivalent to the number of replicates (`length(vector_list)`).
 
 ### Calculate empirical p-values
 
-We can also calculate one-tailed p-values by comparing our observed
-eigenvalues to the null distribution. These are conceptually similar to
-using cutoffs, i.e. anything above the 95% cutoff outlined above will
-have a p-value &lt; 0.05, however they can be useful for removing noise
-and highlighting peaks for visualisation. These are calculated using the
-`eigen_res` results and the `null_input` vectors, and as output we get
-p-values for each eigenvector and window.
+We can also calculate one-tailed empirical p-values (empPvalues) by
+comparing our observed eigenvalues to the null distribution. These are
+conceptually similar to using cutoffs, i.e. anything above the 95%
+cutoff outlined above will have an empPvalue \< 0.05, however they can
+be useful for removing noise and highlighting peaks for visualisation.
+These are calculated using the `eigen_res` results and the `null_input`
+vectors, and as output we get p-values for each eigenvector and window.
 
 ``` r
 # Calculate p-vals
 pvals <- eigen_pvals(eigen_res,null_input)
 
-# Show lowest pvals
+# Showpvals
 head(pvals)
 ```
 
     ##                    Eigenvalue_1 Eigenvalue_2 Eigenvalue_3 Eigenvalue_4
-    ## chr1:15-18166            0.0047       0.0037       0.0145       0.5633
-    ## chr1:18718-48277         0.8091       0.5519       0.6913       0.8760
-    ## chr1:48287-74923         0.2439       0.4433       0.4064       0.6237
-    ## chr1:75219-95836         0.9329       0.9758       0.9446       0.1381
-    ## chr1:96020-119073        0.2670       0.2798       0.2221       0.6889
-    ## chr1:119085-144327       0.1227       0.0695       0.0857       0.2217
+    ## chr1:15-18166        0.01060106   0.01070107   0.02870287    0.5449545
+    ## chr1:18718-48277     0.81028103   0.57445745   0.71917192    0.8695870
+    ## chr1:48287-74923     0.25402540   0.46904690   0.45504550    0.6054605
+    ## chr1:75219-95836     0.93529353   0.97489749   0.94499450    0.1304130
+    ## chr1:96020-119073    0.27692769   0.31113111   0.26062606    0.6687669
+    ## chr1:119085-144327   0.12841284   0.08470847   0.11181118    0.2053205
 
-Note: Because these p-values are calculated by comparing to the null
+Note: Because these empPvalues are calculated by comparing to the null
 distribution, they are bounded by the number of permutations. For
-e.g. if you run 1000 permuations, the lowest possible p-value for an
+e.g. if you run 1000 permutations, the lowest possible p-value for an
 observed value that exceeds all 1000 of the null values is simply
 (0+1/1000+1) which is \~ 0.001. If we ran 10,000 permutations and again
 had an observed eigenvalue greater than all 10,000 null values, this
 would be \~ 0.0001 e.t.c.
 
-Consider this when interpreting p-values!
+Consider this when interpreting empPvalues, as they are not a true
+statistic test!
 
 ### Plot Eigenvalues Along Chromosomes
 
@@ -518,13 +546,9 @@ all_plots <- eigenval_plot(eigen_res,cutoffs = null_cutoffs[,"99%"])
 all_plots[[1]]
 ```
 
-<img src="README_files/figure-markdown_github/fig_eig1-1.png" style="display: block; margin: auto;" />
+![](README_files/figure-gfm/eigenval_plot1-1.png)<!-- -->
 
-Alternatively, we can plot the p-values. IMPORTANT: these p-values are
-empirical p-values, not statistical p-values. Their inclusion here is to
-aid in visualisation rather than to be used as explicit tests of
-significance, and changing the number of null permutations will change
-the empirical p-values:
+Alternatively, we can plot the empPvalues:
 
 ``` r
 # Plot empirical p-values, -log10(p) of 2 ~ p=0.01, 3 ~ p=0.001 etc.
@@ -538,10 +562,10 @@ all_plots_p <- eigenval_plot(eigen_res,null_vectors = null_input,plot.pvalues = 
 all_plots_p[[1]]
 ```
 
-<img src="README_files/figure-markdown_github/fig_eig1_pvals-1.png" style="display: block; margin: auto;" />
+![](README_files/figure-gfm/eigenval_plot%20pvals-1.png)<!-- -->
 
 We can also exploit that all windows are named in the format
-chr:start-end to plot specific chromosomes using grep():
+`chr:start-end` to plot specific chromosomes using `grep()`:
 
 ``` r
 # Plot empirical p-values, -log10(p) of 2 ~ p=0.01, 3 ~ p=0.001 etc.
@@ -556,7 +580,7 @@ all_plots_p_chr1 <- eigenval_plot(eigen_res[chr1_windows],null_vectors = null_in
 all_plots_p_chr1[[1]]
 ```
 
-<img src="README_files/figure-markdown_github/fig_eig1_pvals_chr1-1.png" style="display: block; margin: auto;" />
+![](README_files/figure-gfm/plot%20specific%20window-1.png)<!-- -->
 
 Note here, each of the plots is a ggplot object that can be extracted
 and edited however you like, for e.g. we can remove the title and change
@@ -572,7 +596,7 @@ eig1_pval_fig <- all_plots_p[[1]]
 eig1_pval_fig + theme(title = element_blank()) + geom_step(colour="red2")
 ```
 
-<img src="README_files/figure-markdown_github/fig_eig1_pvals_edit-1.png" style="display: block; margin: auto;" />
+![](README_files/figure-gfm/ggplot%20demo-1.png)<!-- -->
 
 ### Pull Significant Windows
 
@@ -585,7 +609,8 @@ eigenvalue 1 may exceed the null cutoffs for several of our eigenvectors
 (e.g eigenvector 1, 2 and 3). The function `signif_eigen_windows()` is
 aware of this, and only returns windows on the first eigenvector for
 which they exceed a cutoff. This prevents windows being marked as
-significant on multiple eigenvectors.
+significant on multiple eigenvectors. These window however may still
+appear as peaks when plotting, so bear this in mind.
 
 ``` r
 # Recall the use of find_null_cutoffs() to fetch a matrix of cutoffs...
@@ -599,37 +624,16 @@ significant_windows
 ```
 
     ## $`Eigenvector 1`
-    ##  [1] "chr1:9457083-9483166"   "chr1:9483266-9511933"   "chr1:9511981-9539337"  
-    ##  [4] "chr1:9562819-9597779"   "chr1:9597989-9623951"   "chr1:9624028-9645769"  
-    ##  [7] "chr1:9696718-9732103"   "chr1:9732243-9755463"   "chr1:9755467-9785732"  
-    ## [10] "chr1:9818140-9844262"   "chr1:9844263-9882801"   "chr1:9883146-9904934"  
-    ## [13] "chr1:9904984-9925507"   "chr1:9925507-9947330"   "chr1:9947373-9973796"  
-    ## [16] "chr1:9973948-10015463"  "chr1:10015604-10045407" "chr1:10045553-10083818"
-    ## [19] "chr1:10084098-10120847" "chr1:10120973-10145864" "chr1:10145874-10164628"
-    ## [22] "chr1:10164667-10178842" "chr2:9457083-9483166"   "chr2:9483266-9511933"  
-    ## [25] "chr2:9511981-9539337"   "chr2:9562819-9597779"   "chr2:9597989-9623951"  
-    ## [28] "chr2:9624028-9645769"   "chr2:9696718-9732103"   "chr2:9732243-9755463"  
-    ## [31] "chr2:9755467-9785732"   "chr2:9818140-9844262"   "chr2:9844263-9882801"  
-    ## [34] "chr2:9883146-9904934"   "chr2:9904984-9925507"   "chr2:9925507-9947330"  
-    ## [37] "chr2:9947373-9973796"   "chr2:9973948-10015463"  "chr2:10015604-10045407"
-    ## [40] "chr2:10045553-10083818" "chr2:10084098-10120847" "chr2:10120973-10145864"
-    ## [43] "chr2:10145874-10164628" "chr2:10164667-10178842" "chr3:9457083-9483166"  
-    ## [46] "chr3:9483266-9511933"   "chr3:9511981-9539337"   "chr3:9562819-9597779"  
-    ## [49] "chr3:9597989-9623951"   "chr3:9624028-9645769"   "chr3:9696718-9732103"  
-    ## [52] "chr3:9732243-9755463"   "chr3:9755467-9785732"   "chr3:9818140-9844262"  
-    ## [55] "chr3:9844263-9882801"   "chr3:9883146-9904934"   "chr3:9904984-9925507"  
-    ## [58] "chr3:9925507-9947330"   "chr3:9947373-9973796"   "chr3:9973948-10015463" 
-    ## [61] "chr3:10015604-10045407" "chr3:10045553-10083818" "chr3:10084098-10120847"
-    ## [64] "chr3:10120973-10145864" "chr3:10145874-10164628" "chr3:10164667-10178842"
+    ## [1] "chr1:9973948-10015463"  "chr1:10015604-10045407" "chr1:10045553-10083818"
+    ## [4] "chr2:9973948-10015463"  "chr2:10015604-10045407" "chr2:10045553-10083818"
+    ## [7] "chr3:9973948-10015463"  "chr3:10015604-10045407" "chr3:10045553-10083818"
     ## 
     ## $`Eigenvector 2`
-    ## [1] "chr1:10255050-10278066" "chr1:10300099-10323443" "chr2:10255050-10278066"
-    ## [4] "chr2:10300099-10323443" "chr3:10255050-10278066" "chr3:10300099-10323443"
+    ## [1] "chr1:9883146-9904934" "chr1:9925507-9947330" "chr2:9883146-9904934"
+    ## [4] "chr2:9925507-9947330" "chr3:9883146-9904934" "chr3:9925507-9947330"
     ## 
     ## $`Eigenvector 3`
-    ## [1] "chr1:9668333-9696498"   "chr1:9785819-9817951"   "chr1:10278269-10299957"
-    ## [4] "chr2:9668333-9696498"   "chr2:9785819-9817951"   "chr2:10278269-10299957"
-    ## [7] "chr3:9668333-9696498"   "chr3:9785819-9817951"   "chr3:10278269-10299957"
+    ## [1] "chr1:9904984-9925507" "chr2:9904984-9925507" "chr3:9904984-9925507"
     ## 
     ## $`Eigenvector 4`
     ## [1] "chr1:2174583-2191154" "chr2:2174583-2191154" "chr3:2174583-2191154"
@@ -666,13 +670,13 @@ eig1_parallel <- summarise_window_parallelism(window_id = significant_windows[[1
 head(eig1_parallel)
 ```
 
-    ##              window_id eigenvector eigenvalue parallel_lineages
-    ## 1 chr1:9457083-9483166        Eig1   3.936796                 4
-    ## 2 chr1:9483266-9511933        Eig1   3.945282                 4
-    ## 3 chr1:9511981-9539337        Eig1   3.918125                 4
-    ## 4 chr1:9562819-9597779        Eig1   3.869813                 4
-    ## 5 chr1:9597989-9623951        Eig1   3.857929                 4
-    ## 6 chr1:9624028-9645769        Eig1   3.865891                 4
+    ##                window_id eigenvector eigenvalue parallel_lineages
+    ## 1  chr1:9973948-10015463        Eig1   3.974657                 4
+    ## 2 chr1:10015604-10045407        Eig1   3.972499                 4
+    ## 3 chr1:10045553-10083818        Eig1   3.968457                 4
+    ## 4  chr2:9973948-10015463        Eig1   3.974657                 4
+    ## 5 chr2:10015604-10045407        Eig1   3.972499                 4
+    ## 6 chr2:10045553-10083818        Eig1   3.968457                 4
     ##         parallel_pops antiparallel_pops
     ## 1 pop2,pop3,pop4,pop5                  
     ## 2 pop2,pop3,pop4,pop5                  
@@ -705,27 +709,30 @@ eig2_parallel <- summarise_window_parallelism(window_id = significant_windows[[2
 head(eig2_parallel)
 ```
 
-    ##                window_id eigenvector eigenvalue eigenvalue_sum
-    ## 1 chr1:10255050-10278066        Eig1  3.8301820       3.976678
-    ## 2 chr1:10255050-10278066        Eig2  0.1464963       3.976678
-    ## 3 chr1:10300099-10323443        Eig1  3.5610185       3.955615
-    ## 4 chr1:10300099-10323443        Eig2  0.3945960       3.955615
-    ## 5 chr2:10255050-10278066        Eig1  3.8301820       3.976678
-    ## 6 chr2:10255050-10278066        Eig2  0.1464963       3.976678
-    ##   parallel_lineages       parallel_pops antiparallel_pops
-    ## 1                 4 pop2,pop3,pop4,pop5                  
-    ## 2                 2                pop3              pop4
-    ## 3                 4 pop2,pop3,pop4,pop5                  
-    ## 4                 3                pop3         pop2,pop5
-    ## 5                 4 pop2,pop3,pop4,pop5                  
-    ## 6                 2                pop3              pop4
+    ##              window_id eigenvector eigenvalue eigenvalue_sum parallel_lineages
+    ## 1 chr1:9883146-9904934        Eig1 3.94129971       3.985715                 4
+    ## 2 chr1:9883146-9904934        Eig2 0.04441480       3.985715                 2
+    ## 3 chr1:9925507-9947330        Eig1 3.92085336       3.984427                 4
+    ## 4 chr1:9925507-9947330        Eig2 0.06357374       3.984427                 2
+    ## 5 chr2:9883146-9904934        Eig1 3.94129971       3.985715                 4
+    ## 6 chr2:9883146-9904934        Eig2 0.04441480       3.985715                 2
+    ##         parallel_pops antiparallel_pops
+    ## 1 pop2,pop3,pop4,pop5                  
+    ## 2                pop5              pop2
+    ## 3 pop2,pop3,pop4,pop5                  
+    ## 4                pop2              pop5
+    ## 5 pop2,pop3,pop4,pop5                  
+    ## 6                pop5              pop2
 
 Interpreting these tables, the eigenvalues, and the distribution of
 parallel/antiparallel lineages, is key to filtering out regions that may
-be of most interest to particular research questions. For instance,
-windows with very large eigenvalues but a mix of parallel and
-antiparallel lineages may not be good candidates if the hypothesis is
-that all replicate lineages should be evolving using the same alleles…
+be of most interest to particular study questions. For instance, windows
+with very large eigenvalues but a mix of parallel and antiparallel
+lineages may not be good candidates if the hypothesis is that all
+replicate lineages should be evolving using the same alleles…
+
+For more information on interpreting eigenvalue tables, see the
+preprint.
 
 ### Explore candidate regions
 
@@ -769,4 +776,16 @@ ggplot(to_plot,aes(x=pos,y=abs(eig1_score)))+
   labs(y="Eig1 Score",x="Pos (bp)")
 ```
 
-<img src="README_files/figure-markdown_github/unnamed-chunk-20-1.png" style="display: block; margin: auto;" />
+![](README_files/figure-gfm/plot%20A%20matrix-1.png)<!-- -->
+
+## Version History
+
+-   v0.2 - Major update, includes the addition of the data_type
+    parameter for calc_AF_vectors(), and modification of permutation
+    process to shuffle observed frequencies rather than shuffle
+    population IDs for individual and recalculate new allele
+    frequencies. As such, results based on this permutation approach
+    will differ from those of v0.1! Generally this updated permutation
+    approach is more conservative than the previous approach.
+
+-   v0.1 - Initial release alongside preprint.
