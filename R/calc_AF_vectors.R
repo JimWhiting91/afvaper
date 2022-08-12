@@ -3,7 +3,7 @@
 #' Takes as input a population map (popmap) and a VCF (vcfR object) and returns an m x n matrix, where m = the number of SNPs and n = the number of populations
 #'
 #' @param vcf A vcf stored as a vcfR object
-#' @param data_type Character string indicating whether data is in vcfR form 'vcf' - default. Or as a matrix of allele frequencies 'freq'
+#' @param data_type Character string indicating whether data is in vcfR form 'vcf' - default. Or as a matrix of allele frequencies 'freq'. Data in the form of a frequency matrix must have chromosome and position info in cols 1 and 2 respectively. Remaining colnames must match the population IDs listed in the vector list.
 #' @param popmap A two column data.frame, column 1 lists individuals and column 2 population assignment
 #' @param window_size Integer value describing how many SNPs to include per window
 #' @param vectors A list object that descibes each vector. Each list element should be a character vector with two strings, each corresponding to a population in the popmap
@@ -260,7 +260,7 @@ calc_AF_vectors <- function(vcf=NULL,
       for(m in 1:nrow(full_vectors)){
         full_vectors[m,] <- AF_mat[,as.character(vectors[[m]][2])] - AF_mat[,as.character(vectors[[m]][1])]
       }
-      colnames(full_vectors) <- paste0(vcf$chr,"_",vcf$pos)
+      colnames(full_vectors) <- paste0(vcf[,1],"_",vcf[,2])
       rownames(full_vectors) <- names(vectors)
       
       
@@ -284,7 +284,7 @@ calc_AF_vectors <- function(vcf=NULL,
       
       # Fetch start and end pos as names
       names(window_list) <- sapply(1:length(winds),function(x){
-        return(paste0(vcf$chr[1],":",vcf$pos[winds[x]],"-",vcf$pos[winds2[x]]))
+        return(paste0(vcf[,1][1],":",vcf[,2][winds[x]],"-",vcf[,2][winds2[x]]))
       })
       
     } else {
@@ -309,7 +309,7 @@ calc_AF_vectors <- function(vcf=NULL,
         for(m in 1:nrow(null_vectors)){
           null_vectors[m,] <- null_AFs[,as.character(vectors[[m]][2])] - null_AFs[,as.character(vectors[[m]][1])]
         }
-        colnames(null_vectors) <- paste0(data.frame(vcf)[null_winds[x]:null_winds2[x],"chr"],"_",data.frame(vcf)[null_winds[x]:null_winds2[x],"pos"])
+        colnames(null_vectors) <- paste0(data.frame(vcf)[null_winds[x]:null_winds2[x],1],"_",data.frame(vcf)[null_winds[x]:null_winds2[x],2])
         rownames(null_vectors) <- names(vectors)
         
         # Normalise for correlation matrix, otherwise keep as raw...

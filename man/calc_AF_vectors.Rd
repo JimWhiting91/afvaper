@@ -12,7 +12,8 @@ calc_AF_vectors(
   n_cores = 1,
   normalise = TRUE,
   end_cutoff = window_size,
-  null_perms = NULL
+  null_perms = NULL,
+  data_type = "vcf"
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ calc_AF_vectors(
 \item{end_cutoff}{Numeric value describing how many SNPs the last window can have. By default, this equals the window_size, such that the last window must have the same number of SNPs as all windows. This is highly recommended.}
 
 \item{null_perms}{Integer value describing how many null permutations to run. When set to NULL, function returns observed allele frequency vectors. When set to any integer value, the function returns randomised permutated vectors that are used for estimation of the null distribution.}
+
+\item{data_type}{Character string indicating whether data is in vcfR form 'vcf' - default. Or as a matrix of allele frequencies 'freq'. Data in the form of a frequency matrix must have chromosome and position info in cols 1 and 2 respectively. Remaining colnames must match the population IDs listed in the vector list.}
 }
 \value{
 A list object where each element corresponds to an m (number of SNPs per window) x n (number of populations) matrix of allele frequency change vectors

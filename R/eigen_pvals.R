@@ -38,7 +38,7 @@ eigen_pvals <- function(eigen_res,null_vectors){
   # Get p-vals
   p_vals <- matrix(ncol=ncol(obs_mat),nrow=nrow(obs_mat))
   for(i in 1:ncol(p_vals)){
-    p_vals[,i] <- qvalue:::empPvals(stat = obs_mat[,i],stat0 = null_mat[,i])
+    p_vals[,i] <- qvalue::empPvals(stat = obs_mat[,i],stat0 = null_mat[,i])
   }
 
   colnames(p_vals) <- paste0("Eigenvalue_",1:ncol(p_vals))

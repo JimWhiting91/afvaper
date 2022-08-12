@@ -1,7 +1,7 @@
-AF-vapeR Manual v0.2
+AF-vapeR Manual v0.2.1
 ================
 James R Whiting
-2022-05-24
+2022-08-12
 
 # Allele Frequency Vector Analysis of Parallel Evolutionary Responses
 
@@ -62,7 +62,7 @@ library(vcfR,verbose = F)
 
     ## 
     ##    *****       ***   vcfR   ***       *****
-    ##    This is vcfR 1.12.0 
+    ##    This is vcfR 1.13.0 
     ##      browseVignettes('vcfR') # Documentation
     ##      citation('vcfR') # Citation
     ##    *****       *****      *****       *****
@@ -484,9 +484,9 @@ null_cutoffs
 ```
 
     ##                    95%      99%    99.9%
-    ## Eigenvector 1 3.491359 3.770233 3.950632
-    ## Eigenvector 2 3.838970 3.924911 3.984057
-    ## Eigenvector 3 3.960258 3.982424 3.996348
+    ## Eigenvector 1 3.473013 3.758088 3.943806
+    ## Eigenvector 2 3.837055 3.919276 3.984477
+    ## Eigenvector 3 3.958171 3.981431 3.995346
     ## Eigenvector 4 4.000000 4.000000 4.000000
 
 Here, the values are summed through eigenvalues, such that the value for
@@ -512,12 +512,12 @@ head(pvals)
 ```
 
     ##                    Eigenvalue_1 Eigenvalue_2 Eigenvalue_3 Eigenvalue_4
-    ## chr1:15-18166        0.01060106   0.01070107   0.02870287    0.5449545
-    ## chr1:18718-48277     0.81028103   0.57445745   0.71917192    0.8695870
-    ## chr1:48287-74923     0.25402540   0.46904690   0.45504550    0.6054605
-    ## chr1:75219-95836     0.93529353   0.97489749   0.94499450    0.1304130
-    ## chr1:96020-119073    0.27692769   0.31113111   0.26062606    0.6687669
-    ## chr1:119085-144327   0.12841284   0.08470847   0.11181118    0.2053205
+    ## chr1:15-18166        0.00990099   0.00950095   0.02210221    0.5536554
+    ## chr1:18718-48277     0.80798080   0.57355736   0.71837184    0.8693869
+    ## chr1:48287-74923     0.24922492   0.47044704   0.45014501    0.6151615
+    ## chr1:75219-95836     0.93439344   0.97509751   0.94629463    0.1340134
+    ## chr1:96020-119073    0.27062706   0.30713071   0.25892589    0.6771677
+    ## chr1:119085-144327   0.12431243   0.08420842   0.10801080    0.2129213
 
 Note: Because these empPvalues are calculated by comparing to the null
 distribution, they are bounded by the number of permutations. For
@@ -624,13 +624,13 @@ significant_windows
 ```
 
     ## $`Eigenvector 1`
-    ## [1] "chr1:9973948-10015463"  "chr1:10015604-10045407" "chr1:10045553-10083818"
-    ## [4] "chr2:9973948-10015463"  "chr2:10015604-10045407" "chr2:10045553-10083818"
-    ## [7] "chr3:9973948-10015463"  "chr3:10015604-10045407" "chr3:10045553-10083818"
+    ##  [1] "chr1:9483266-9511933"   "chr1:9973948-10015463"  "chr1:10015604-10045407"
+    ##  [4] "chr1:10045553-10083818" "chr2:9483266-9511933"   "chr2:9973948-10015463" 
+    ##  [7] "chr2:10015604-10045407" "chr2:10045553-10083818" "chr3:9483266-9511933"  
+    ## [10] "chr3:9973948-10015463"  "chr3:10015604-10045407" "chr3:10045553-10083818"
     ## 
     ## $`Eigenvector 2`
-    ## [1] "chr1:9883146-9904934" "chr1:9925507-9947330" "chr2:9883146-9904934"
-    ## [4] "chr2:9925507-9947330" "chr3:9883146-9904934" "chr3:9925507-9947330"
+    ## [1] "chr1:9883146-9904934" "chr2:9883146-9904934" "chr3:9883146-9904934"
     ## 
     ## $`Eigenvector 3`
     ## [1] "chr1:9904984-9925507" "chr2:9904984-9925507" "chr3:9904984-9925507"
@@ -671,12 +671,12 @@ head(eig1_parallel)
 ```
 
     ##                window_id eigenvector eigenvalue parallel_lineages
-    ## 1  chr1:9973948-10015463        Eig1   3.974657                 4
-    ## 2 chr1:10015604-10045407        Eig1   3.972499                 4
-    ## 3 chr1:10045553-10083818        Eig1   3.968457                 4
-    ## 4  chr2:9973948-10015463        Eig1   3.974657                 4
-    ## 5 chr2:10015604-10045407        Eig1   3.972499                 4
-    ## 6 chr2:10045553-10083818        Eig1   3.968457                 4
+    ## 1   chr1:9483266-9511933        Eig1   3.945282                 4
+    ## 2  chr1:9973948-10015463        Eig1   3.974657                 4
+    ## 3 chr1:10015604-10045407        Eig1   3.972499                 4
+    ## 4 chr1:10045553-10083818        Eig1   3.968457                 4
+    ## 5   chr2:9483266-9511933        Eig1   3.945282                 4
+    ## 6  chr2:9973948-10015463        Eig1   3.974657                 4
     ##         parallel_pops antiparallel_pops
     ## 1 pop2,pop3,pop4,pop5                  
     ## 2 pop2,pop3,pop4,pop5                  
@@ -710,17 +710,17 @@ head(eig2_parallel)
 ```
 
     ##              window_id eigenvector eigenvalue eigenvalue_sum parallel_lineages
-    ## 1 chr1:9883146-9904934        Eig1 3.94129971       3.985715                 4
-    ## 2 chr1:9883146-9904934        Eig2 0.04441480       3.985715                 2
-    ## 3 chr1:9925507-9947330        Eig1 3.92085336       3.984427                 4
-    ## 4 chr1:9925507-9947330        Eig2 0.06357374       3.984427                 2
-    ## 5 chr2:9883146-9904934        Eig1 3.94129971       3.985715                 4
-    ## 6 chr2:9883146-9904934        Eig2 0.04441480       3.985715                 2
+    ## 1 chr1:9883146-9904934        Eig1  3.9412997       3.985715                 4
+    ## 2 chr1:9883146-9904934        Eig2  0.0444148       3.985715                 2
+    ## 3 chr2:9883146-9904934        Eig1  3.9412997       3.985715                 4
+    ## 4 chr2:9883146-9904934        Eig2  0.0444148       3.985715                 2
+    ## 5 chr3:9883146-9904934        Eig1  3.9412997       3.985715                 4
+    ## 6 chr3:9883146-9904934        Eig2  0.0444148       3.985715                 2
     ##         parallel_pops antiparallel_pops
     ## 1 pop2,pop3,pop4,pop5                  
     ## 2                pop5              pop2
     ## 3 pop2,pop3,pop4,pop5                  
-    ## 4                pop2              pop5
+    ## 4                pop5              pop2
     ## 5 pop2,pop3,pop4,pop5                  
     ## 6                pop5              pop2
 
@@ -779,6 +779,8 @@ ggplot(to_plot,aes(x=pos,y=abs(eig1_score)))+
 ![](README_files/figure-gfm/plot%20A%20matrix-1.png)<!-- -->
 
 ## Version History
+
+-   v0.2.1 - Minor bug fixes and documentation fixes.
 
 -   v0.2 - Major update, includes the addition of the data_type
     parameter for calc_AF_vectors(), and modification of permutation
