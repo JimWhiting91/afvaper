@@ -18,8 +18,15 @@ in multiple populations). Multiple eigenvectors with elevated
 eigenvalues is indicative of multiple parallel/antiparallel axes within
 a genomic region, highlighting nonparallelism.
 
-For more information on the software, please see the accompanying
-preprint: <https://www.biorxiv.org/content/10.1101/2021.09.17.460770v1>
+It is highly recommended to read the accompanying manuscript before
+applying this method. The manuscript is published in Methods in Ecology
+and Evolution (<https://doi.org/10.1111/2041-210X.13952>)
+
+### Citation
+
+    Whiting, James R., Josephine R. Paris, Mijke J. van der Zee, and Bonnie A. Fraser. 2022. 
+    “AF‐vapeR : A Multivariate Genome Scan for Detecting Parallel Evolution Using Allele Frequency Change Vectors.”
+    Methods in Ecology and Evolution / British Ecological Society, August. https://doi.org/10.1111/2041-210x.13952.
 
 <!-- ### Load from development dir -->
 <!-- ```{r} -->
@@ -484,9 +491,9 @@ null_cutoffs
 ```
 
     ##                    95%      99%    99.9%
-    ## Eigenvector 1 3.473013 3.758088 3.943806
-    ## Eigenvector 2 3.837055 3.919276 3.984477
-    ## Eigenvector 3 3.958171 3.981431 3.995346
+    ## Eigenvector 1 3.469026 3.731064 3.940222
+    ## Eigenvector 2 3.831833 3.919587 3.984385
+    ## Eigenvector 3 3.958563 3.981497 3.995629
     ## Eigenvector 4 4.000000 4.000000 4.000000
 
 Here, the values are summed through eigenvalues, such that the value for
@@ -512,12 +519,12 @@ head(pvals)
 ```
 
     ##                    Eigenvalue_1 Eigenvalue_2 Eigenvalue_3 Eigenvalue_4
-    ## chr1:15-18166        0.00990099   0.00950095   0.02210221    0.5536554
-    ## chr1:18718-48277     0.80798080   0.57355736   0.71837184    0.8693869
-    ## chr1:48287-74923     0.24922492   0.47044704   0.45014501    0.6151615
-    ## chr1:75219-95836     0.93439344   0.97509751   0.94629463    0.1340134
-    ## chr1:96020-119073    0.27062706   0.30713071   0.25892589    0.6771677
-    ## chr1:119085-144327   0.12431243   0.08420842   0.10801080    0.2129213
+    ## chr1:15-18166        0.00890089   0.00960096   0.02240224    0.5487549
+    ## chr1:18718-48277     0.80468047   0.56935694   0.71587159    0.8722872
+    ## chr1:48287-74923     0.24472447   0.46474647   0.45114511    0.6120612
+    ## chr1:75219-95836     0.93329333   0.97729773   0.94709471    0.1333133
+    ## chr1:96020-119073    0.26822682   0.30383038   0.25612561    0.6781678
+    ## chr1:119085-144327   0.12231223   0.07890789   0.10491049    0.2092209
 
 Note: Because these empPvalues are calculated by comparing to the null
 distribution, they are bounded by the number of permutations. For
@@ -624,13 +631,14 @@ significant_windows
 ```
 
     ## $`Eigenvector 1`
-    ##  [1] "chr1:9483266-9511933"   "chr1:9973948-10015463"  "chr1:10015604-10045407"
-    ##  [4] "chr1:10045553-10083818" "chr2:9483266-9511933"   "chr2:9973948-10015463" 
-    ##  [7] "chr2:10015604-10045407" "chr2:10045553-10083818" "chr3:9483266-9511933"  
-    ## [10] "chr3:9973948-10015463"  "chr3:10015604-10045407" "chr3:10045553-10083818"
+    ##  [1] "chr1:9483266-9511933"   "chr1:9883146-9904934"   "chr1:9973948-10015463" 
+    ##  [4] "chr1:10015604-10045407" "chr1:10045553-10083818" "chr2:9483266-9511933"  
+    ##  [7] "chr2:9883146-9904934"   "chr2:9973948-10015463"  "chr2:10015604-10045407"
+    ## [10] "chr2:10045553-10083818" "chr3:9483266-9511933"   "chr3:9883146-9904934"  
+    ## [13] "chr3:9973948-10015463"  "chr3:10015604-10045407" "chr3:10045553-10083818"
     ## 
     ## $`Eigenvector 2`
-    ## [1] "chr1:9883146-9904934" "chr2:9883146-9904934" "chr3:9883146-9904934"
+    ## [1] "chr1:9925507-9947330" "chr2:9925507-9947330" "chr3:9925507-9947330"
     ## 
     ## $`Eigenvector 3`
     ## [1] "chr1:9904984-9925507" "chr2:9904984-9925507" "chr3:9904984-9925507"
@@ -672,11 +680,11 @@ head(eig1_parallel)
 
     ##                window_id eigenvector eigenvalue parallel_lineages
     ## 1   chr1:9483266-9511933        Eig1   3.945282                 4
-    ## 2  chr1:9973948-10015463        Eig1   3.974657                 4
-    ## 3 chr1:10015604-10045407        Eig1   3.972499                 4
-    ## 4 chr1:10045553-10083818        Eig1   3.968457                 4
-    ## 5   chr2:9483266-9511933        Eig1   3.945282                 4
-    ## 6  chr2:9973948-10015463        Eig1   3.974657                 4
+    ## 2   chr1:9883146-9904934        Eig1   3.941300                 4
+    ## 3  chr1:9973948-10015463        Eig1   3.974657                 4
+    ## 4 chr1:10015604-10045407        Eig1   3.972499                 4
+    ## 5 chr1:10045553-10083818        Eig1   3.968457                 4
+    ## 6   chr2:9483266-9511933        Eig1   3.945282                 4
     ##         parallel_pops antiparallel_pops
     ## 1 pop2,pop3,pop4,pop5                  
     ## 2 pop2,pop3,pop4,pop5                  
@@ -710,19 +718,19 @@ head(eig2_parallel)
 ```
 
     ##              window_id eigenvector eigenvalue eigenvalue_sum parallel_lineages
-    ## 1 chr1:9883146-9904934        Eig1  3.9412997       3.985715                 4
-    ## 2 chr1:9883146-9904934        Eig2  0.0444148       3.985715                 2
-    ## 3 chr2:9883146-9904934        Eig1  3.9412997       3.985715                 4
-    ## 4 chr2:9883146-9904934        Eig2  0.0444148       3.985715                 2
-    ## 5 chr3:9883146-9904934        Eig1  3.9412997       3.985715                 4
-    ## 6 chr3:9883146-9904934        Eig2  0.0444148       3.985715                 2
+    ## 1 chr1:9925507-9947330        Eig1 3.92085336       3.984427                 4
+    ## 2 chr1:9925507-9947330        Eig2 0.06357374       3.984427                 2
+    ## 3 chr2:9925507-9947330        Eig1 3.92085336       3.984427                 4
+    ## 4 chr2:9925507-9947330        Eig2 0.06357374       3.984427                 2
+    ## 5 chr3:9925507-9947330        Eig1 3.92085336       3.984427                 4
+    ## 6 chr3:9925507-9947330        Eig2 0.06357374       3.984427                 2
     ##         parallel_pops antiparallel_pops
     ## 1 pop2,pop3,pop4,pop5                  
-    ## 2                pop5              pop2
+    ## 2                pop2              pop5
     ## 3 pop2,pop3,pop4,pop5                  
-    ## 4                pop5              pop2
+    ## 4                pop2              pop5
     ## 5 pop2,pop3,pop4,pop5                  
-    ## 6                pop5              pop2
+    ## 6                pop2              pop5
 
 Interpreting these tables, the eigenvalues, and the distribution of
 parallel/antiparallel lineages, is key to filtering out regions that may
